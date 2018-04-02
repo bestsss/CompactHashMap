@@ -3,6 +3,7 @@ package bestsss.map;
 import java.io.IOException;
 
 /*Written by S. Simeonoff and released to the public domain, as explained at http://creativecommons.org/publicdomain/zero/1.0/
+ * 2018
  */
 
 import java.util.*;
@@ -36,12 +37,11 @@ public class CompactHashMap<K, V> implements Map<K, V>, Cloneable, java.io.Seria
     private static int hash(Object key, int len) {
         return smear(key.hashCode()) & (len - 1) & ~1;//mask the for the key (always 0th bit has to be zero) {len - 2, should be ok}
     }
-    
+    //only 2 fields, no 'caching' for entrySet/keySet/etc.; the benefits are minuscule and better be created/dropped on each call, similar to iterators 
     transient int size = 0;
     transient Object[] table = EMPTY;//key at even pos, value at odd, no nulls
     
-    private boolean needGrow(int size){
-        final int len = table.length;
+    private static boolean needGrow(int len, int size){        
         if (len <= 32)//less than 16 elements 
             return len >> 1  < size;
         if (len <= 128)//less than 64 (~40) elements 
@@ -78,7 +78,7 @@ public class CompactHashMap<K, V> implements Map<K, V>, Cloneable, java.io.Seria
             }
 
             final int s = size + 1;
-            if (needGrow(s) && resize(len))
+            if (needGrow(len, s) && resize(len))
                 continue retryAfterResize;
 
             tab[i] = k;
@@ -106,7 +106,7 @@ public class CompactHashMap<K, V> implements Map<K, V>, Cloneable, java.io.Seria
                 V oldValue = (V) tab[i + 1];
                 tab[i + 1] = null;
                 
-                closeDeletion(i);
+                closeDeletion(i, tab, len);
                 return oldValue;
             }
             if (item == null || start == (i = nextKeyIndex(i, len)))
@@ -119,40 +119,31 @@ public class CompactHashMap<K, V> implements Map<K, V>, Cloneable, java.io.Seria
      * deletion. This preserves the linear-probe
      * collision properties required by get, put, etc.
      *
-     * @param d the index of a newly empty deleted slot
+     * @param del the index of a newly empty deleted slot
      */
-    private void closeDeletion(int d) {
-        // Adapted from Knuth Section 6.4 Algorithm R
-        Object[] tab = table;
-        int len = tab.length;
+    private static void closeDeletion(int del, Object[] tab , int len) {
+        // Adapted from Knuth Section 6.4 Algorithm R       
 
-        // Look for items to swap into newly vacated slot
-        // starting at index immediately following deletion,
-        // and continuing until a null slot is seen, indicating
-        // the end of a run of possibly-colliding keys.
         Object item;
-        for (int i = nextKeyIndex(d, len); (item = tab[i]) != null;
-             i = nextKeyIndex(i, len) ) {
-            // The following test triggers if the item at slot i (which
-            // hashes to be at slot r) should take the spot vacated by d.
-            // If so, we swap it in, and then continue with d now at the
-            // newly vacated i.  This process will terminate when we hit
-            // the null slot at the end of this run.
-            // The test is messy because we are using a circular table.
-            int r = hash(item, len);
-            if ((i < r && (r <= d || d <= i)) || (r <= d && d <= i)) {
-                tab[d] = item;
-                tab[d + 1] = tab[i + 1];
-                tab[i] = null;
+        
+        for (int i = nextKeyIndex(del, len); (item = tab[i]) != null;
+             i = nextKeyIndex(i, len) ) {//guaranteed to have at least one null, so no need to loop the loop
+
+            int hash = hash(item, len);
+            if ((i < hash && (hash <= del || del <= i)) || (hash <= del && del <= i)) {
+                tab[del] = item;
+                tab[del + 1] = tab[i + 1];
+                tab[i] = null;//mark end of chain
                 tab[i + 1] = null;
-                d = i;
+                del = i;
             }
         }
     }
 
 
     private static int nextKeyIndex(int i, int len) {
-        return i + 2 < len ? i + 2 : 0;
+//        return (i += 2) < len ? i : 0;
+        return (i +2) & (len-1); //not certain if branchless code is better (branch is perfectly predictable, for higher sizes)
     }
     
     private boolean resize(int newCapacity) { 
