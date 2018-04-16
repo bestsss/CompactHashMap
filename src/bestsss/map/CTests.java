@@ -27,8 +27,10 @@ public class CTests {
         testIteratorRemove(newMap(11, CompactHashMap::new), 11);
         testIteratorRemove(newMap(11, HashMap::new), 11);
         
-        lowSize(new CompactHashMap<>());
-        lowSize(new HashMap<>());
+        assertEquals(
+            lowSize(new CompactHashMap<>()),  
+            lowSize(new HashMap<>())
+        );
         
         evenLower(new CompactHashMap<>());
         evenLower(new HashMap<>());       
@@ -58,7 +60,7 @@ public class CTests {
         }
     }
 
-    private static void lowSize(Map<URI, String>  map) {
+    private static Map<URI, String> lowSize(Map<URI, String>  map) {
         try{
             for (int i =0; i<8; i++){
                 String x = String.format("sss://%d?value", i);
@@ -67,6 +69,7 @@ public class CTests {
                 assertEquals(map.get(new URI(x+"x")), null);
 
             }
+            return map;
         }catch (Exception e) {
             throw new RuntimeException(e);
         }
