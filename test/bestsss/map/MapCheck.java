@@ -24,7 +24,7 @@ public class MapCheck {
     static TestTimer timer = new TestTimer();
     static Class<?> eclass;
     static Class<?> mapClass = bestsss.map.CompactHashMap.class; //java.util.concurrent.ConcurrentHashMap.class;
-
+    static final boolean singleLine = Boolean.getBoolean("singleLine");
     static final LoopHelpers.SimpleRandom srng = new LoopHelpers.SimpleRandom();
     static final Random rng = new Random(3152688);
 
@@ -35,8 +35,8 @@ public class MapCheck {
     }
 
     public static void main(String[] args) throws Exception {
-        int numTests = 400000;
-        int size = 4; // about midway of HashMap resize interval
+        int numTests = 30000;
+        int size = 157;//36864; // about midway of HashMap resize interval
 
         if (args.length == 0)
             System.out.println("Usage: MapCheck mapclass [int|float|string|object] [trials] [size] [serialtest]");
@@ -72,12 +72,15 @@ public class MapCheck {
         boolean doSerializeTest = args.length > 4;
 
         while ((size & 3) != 0) ++size;
-
-        System.out.print("Class: " + mapClass.getName());
-        System.out.print(" elements: " + eclass.getName());
-        System.out.print(" trials: " + numTests);
-        System.out.print(" size: " + size);
-        System.out.println();
+        if (!singleLine){
+            System.out.print("Class: " + mapClass.getName());
+            System.out.print(" elements: " + eclass.getName());
+            System.out.print(" trials: " + numTests);
+            System.out.print(" size: " + size);
+            System.out.println();
+        } else{
+            System.out.printf("%s\t%s\t%d",mapClass.getSimpleName(), eclass.getSimpleName(), size);
+        }
 
         Object[] key = new Object[size];
         Object[] absent = new Object[size];
@@ -139,7 +142,8 @@ public class MapCheck {
             m.put(null, x);
             v = m.get(null);
         } catch (NullPointerException npe) {
-            System.out.println("Map does not allow null keys");
+            if (!singleLine)
+                System.out.println("Map does not allow null keys");
             return;
         }
         if (v != x) throw new Error();
@@ -646,12 +650,14 @@ public class MapCheck {
         private long startTime;
 
         static final java.util.TreeMap accum = new java.util.TreeMap();
-
+        
         static void printStats() {
             for (Iterator it = accum.entrySet().iterator(); it.hasNext(); ) {
                 Map.Entry e = (Map.Entry) it.next();
                 Stats stats = (Stats) e.getValue();
-                System.out.print(e.getKey() + ": ");
+                if (!singleLine){
+                    System.out.print(e.getKey() + ": ");
+                }
                 long s;
                 long n = stats.number;
                 if (n == 0) {
@@ -663,11 +669,19 @@ public class MapCheck {
 
                 double t = ((double) s) / n;
                 long nano = Math.round(t);
+                if (singleLine)
+                    System.out.print('\t');
+                
                 System.out.printf("%6d", + nano);
-                System.out.println();
-            }
+                
+                if (!singleLine){
+                    System.out.println();
+                }  
+            }            
+            System.out.println();
         }
 
+        
         void start(String name, long numOps) {
             this.name = name;
             this.numOps = numOps;
