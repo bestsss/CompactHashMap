@@ -47,7 +47,7 @@ public class CompactHashMap<K, V> implements Map<K, V>, Cloneable, java.io.Seria
         if (len <= 128)//less than 64 (~40) elements 
             return len  < size *3; //length is capacity, so .66 fill factor mid size; trade off for optimal performance
         
-        return len  < size + size + (size >> 1); //length is capacity, so .66 fill factor for larger ones; large sizes, compact it; save memory
+        return len  < size + size + (size >> 1); //length is capacity, so .75 fill factor for larger ones; large sizes, compact it; save memory
     }
     
     public V put(K key, V value) {
