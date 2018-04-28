@@ -3,8 +3,12 @@ package bestsss.map;
 import java.lang.management.ManagementFactory;
 import java.util.*;
 
+/*Written by S. Simeonoff and released to the public domain, as explained at http://creativecommons.org/publicdomain/zero/1.0/
+*/
+
 /**
-* @copyright Playtech 2018
+ * Utility class to estimate the footprint per entry for CompactHashMap  
+ *
 * @author Stanimir Simeonoff
 */
 public class Memer {
