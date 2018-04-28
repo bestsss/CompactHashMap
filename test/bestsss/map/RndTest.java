@@ -2,6 +2,7 @@ package bestsss.map;
 /*Written by S. Simeonoff and released to the public domain, as explained at http://creativecommons.org/publicdomain/zero/1.0/
  */
  
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -12,8 +13,16 @@ import java.util.Map.Entry;
 public class RndTest {
   
   public static void main(String[] args) {
-    int iterations = (int) 1e6;
-    int maxKey = (int) 1e7;
+    run(10000);//warm up
+    
+    long nanos = -System.nanoTime();    
+    int s = run((int)1e6);
+    nanos += System.nanoTime();
+    System.out.printf("Time %.2fms; size: %d", BigDecimal.valueOf(nanos, 6), s);
+  }
+  
+  static int run(int iterations){    
+    int maxKey = iterations * 11;
     float read = 0.8f;
     float add = read + 0.15f;
     
@@ -70,9 +79,11 @@ public class RndTest {
       
     }
     
-    System.out.printf("%nSize: %d, puts: %d, removals: %d%n", c.size, puts, removals);
+    System.out.printf("%nIterations: %d, size: %d, puts: %d, removals: %d%n", iterations, c.size, puts, removals);
     assertEquals(h, c);
+    return c.size();
   }
+  
   static long val(long k){
      return k * (k+2);
   }
