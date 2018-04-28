@@ -39,7 +39,6 @@ public class RndTest {
           assertEquals(c, h);
           if (f < 0.0001){
             System.out.print('.');//single dot; we are moving
-            assertEquals(h, c);//reverse equals as well
           }
         }
         continue;
