@@ -88,6 +88,7 @@ public class RndTest {
      return k * (k+2);
   }
   
+//randomKey can be used as a tool for probabilistic expiration cache (i.e. gather several random keys [+values] and expire one of them [lowest score])
   static Integer randomKey(Random r, CompactHashMap<Integer, ?> c){
     Object[] tab = c.table;
     if (tab.length == 0)
