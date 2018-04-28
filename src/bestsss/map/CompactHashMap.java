@@ -272,10 +272,15 @@ public class CompactHashMap<K, V> implements Map<K, V>, Cloneable, java.io.Seria
         Map<?,?> m = (Map<?,?>) o;
         if (m.size() != size)
             return false;
-
+        
         try {
+            int i=0;
+            if (m instanceof CompactHashMap){
+                i = Math.max(0, nextDiff((CompactHashMap<?, ?>) m));
+            }
+            
             final Object[] tab = table;
-            for(int i=0; i<tab.length; i+=2){
+            for(;i<tab.length; i+=2){
                 Object k = tab[i];
                 if (k!=null && !tab[i+1].equals(m.get(k))){
                     return false;
@@ -286,7 +291,22 @@ public class CompactHashMap<K, V> implements Map<K, V>, Cloneable, java.io.Seria
         }
         return true;
     }
-    
+    private int nextDiff(CompactHashMap<?, ?> m){//returns next NOT matching index (i.e. zero to start normally), tab.length = equals
+        final Object[] tab = table;
+        final Object[] other = m.table;
+        if (tab.length != other.length)
+            return 0;
+        for(int i=0, s=tab.length-1; i<s; i+=2){//a very special case for FAST equals
+            Object k = tab[i];
+            if (k==null)
+                continue;
+            Object o,v;
+            if ((k!=(o=other[i]) && !k.equals(o)) || ((v=tab[i+1])!=(o=other[i+1]) && !v.equals(o))){                
+                return i;//preserve progress
+            }
+        }
+        return tab.length;
+    }    
     public String toString() {
         Iterator<Entry<K,V>> i = entrySet().iterator();
         if (!i.hasNext())
