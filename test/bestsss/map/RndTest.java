@@ -5,6 +5,8 @@ package bestsss.map;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  *  Random test adding, removing and reading from {@link CompactHashMap} and {@link HashMap}, checking for equality 
@@ -19,7 +21,31 @@ public class RndTest {
       run((int)5.5e4, i);
     }
     
-    timedRun((int)7.8e5, Integer.MAX_VALUE);
+
+    if (Boolean.getBoolean("torture")){
+      runTorture();
+    } else{
+      timedRun((int)7.8e5, Integer.MAX_VALUE);
+    }
+  }
+
+  private static void runTorture() {
+    int cores = Math.max(1,  Runtime.getRuntime().availableProcessors() -1);    
+    ExecutorService e = java.util.concurrent.Executors.newFixedThreadPool(cores);
+    int iterations = (int) 3.9e6;
+    for (int i=0; i<cores; i++){
+      e.submit(() ->timedRun(iterations, 1 << 18));
+    }
+    e.shutdown();
+    
+    try{
+      if (!e.awaitTermination(30, TimeUnit.MINUTES)){
+        System.err.println("failed torture");
+        System.exit(-2);
+      }
+    }catch (InterruptedException _ie) {
+      Thread.currentThread().interrupt();
+    }
   }
 
   private static void timedRun(int iterations, int maxSize) {
@@ -54,10 +80,10 @@ public class RndTest {
         Long v = c.get(k);
         assertEquals(h.get(k), v);
         assertEquals(val(k), v);
-        if (f < 0.01){
+        if (f < 0.0003){
           assertEquals(c, h);
-          if (print && f < 0.0001){
-            System.out.print('.');//single dot; we are moving
+          if (print && f < 0.00001){
+            System.out.print('.');//single dot; we are moving            
           }
         }
         continue;
