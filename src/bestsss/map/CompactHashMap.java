@@ -446,8 +446,8 @@ public class CompactHashMap<K, V> implements Map<K, V>, Cloneable, java.io.Seria
     }
     
     private abstract class BasicIter<E> implements Iterator<E>{
-        int idx = 0;
         Object[] tab = table;
+        int idx = size > 0?0: ~0;//when the hashtable is empty, position the index beyond (~0 & MAX_VALUE == MAX_VALUE) 
         @Override
         public boolean hasNext() {
             return (idx & Integer.MAX_VALUE) < tab.length;

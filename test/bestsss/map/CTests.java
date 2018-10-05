@@ -33,9 +33,11 @@ public class CTests {
         );
         
         evenLower(new CompactHashMap<>());
-        evenLower(new HashMap<>());       
+        evenLower(new HashMap<>());
+
+        emptyTest(new CompactHashMap<>());
     }  
-    
+
     private static void assertEquals(Object actual, Object expected){
         if (!Objects.equals(actual, expected) || !Objects.equals(expected, actual)){//ensure transitive props for equals
             throw new AssertionError(String.format("Fail. Actual %s, expected: %s", actual, expected));
@@ -113,5 +115,31 @@ public class CTests {
         for (long i=0; i<count; i++){
             map.put(i*i, String.valueOf(i));
         }
+    }
+    
+
+    private static void emptyTest(Map<String, Integer> m) {
+        int z  = 0;
+        m.put("a", 1);
+        m.put("b", 2);
+        assertEquals(m.size(), 2);
+        for (Map.Entry<?, Integer> x : m.entrySet()) 
+            z+=x.getValue();
+        
+        assertEquals(z, 3);
+        
+        m.remove("a");
+        m.remove("b");
+        
+        assertEquals(m.isEmpty(), true);
+        assertEquals(m.keySet().iterator().hasNext(), false);
+        for (Map.Entry<?, Integer> x : m.entrySet()) 
+            z+=x.getValue();
+        
+        assertEquals(z, 3);
+        for (Integer x : m.values()) 
+            z+=x;
+        
+        assertEquals(z, 3);
     }
 }
