@@ -17,6 +17,7 @@ package bestsss.map;
  * linux "shuf" to randomize entries.
  */
 import java.io.*;
+import java.math.BigDecimal;
 import java.util.*;
 
 public class MapCheck {
@@ -87,7 +88,7 @@ public class MapCheck {
         initializeKeys(key, absent, size);
 
         precheck(size, key, absent);
-
+        final long begin = System.nanoTime();
         for (int rep = 0; rep < numTests; ++rep) {
             mainTest(newMap(), key, absent);
             if ((rep & 3) == 3 && rep < numTests - 1) {
@@ -102,6 +103,15 @@ public class MapCheck {
 
         if (doSerializeTest)
             serTest(newMap(), size);
+        
+        long time = 0;
+        for (java.lang.management.GarbageCollectorMXBean b : java.lang.management.ManagementFactory.getGarbageCollectorMXBeans()){
+          long c = b.getCollectionTime();
+          time += c;
+          System.out.printf("GC (%20s) Time: %6dms%n", b.getName(), c);          
+        }
+        System.out.printf("GC (%20s) Time: %6dms%n", "Total", time);
+        System.out.printf("Time: %.3fs%n", BigDecimal.valueOf(System.nanoTime() - begin, 9));
     }
 
     static Map newMap() {
@@ -598,10 +608,11 @@ public class MapCheck {
                 for (;;) {
                     int c = in.read();
                     if (c < 0) {
+                        java.util.TreeSet<Object> x = new java.util.TreeSet<>(/*Integer.highestOneBit(size-ki) << 2*/);
                         if (ki < size)
-                            randomWords(key, ki, size);
+                            randomWords(key, ki, size, x);
                         if (ai < size)
-                            randomWords(abs, ai, size);
+                            randomWords(abs, ai, size, x);
                         in.close();
                         return;
                     }
@@ -624,7 +635,7 @@ public class MapCheck {
         }
     }
 
-    static void randomWords(Object[] ws, int origin, int size) {
+    static void randomWords(Object[] ws, int origin, int size, Set<Object> x) {      
         for (int i = origin; i < size; ++i) {
             int k = 0;
             int len = 2 + (srng.next() & 0xf);
@@ -640,7 +651,9 @@ public class MapCheck {
                 c[k++] = (char) (' ' + (r & 0x7f));
             }
             c[k++] = (char) ((i & 31) | 1); // never == to any testword
-            ws[i] = new String(c);
+            if (!x.add(ws[i] = new String(c))){
+              i--;//go back
+            }
         }
     }
 
