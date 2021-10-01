@@ -43,9 +43,9 @@ public class CompactHashMap<K, V> implements Map<K, V>, Cloneable, java.io.Seria
     
     private static boolean needGrow(int len, int size){        
         if (len <= 32)//less than 16 elements 
-            return len >> 1  < size;
+            return len >> 1 < size;
         if (len <= 128)//less than 64 (~40) elements 
-            return len  < size *3; //length is capacity, so .66 fill factor mid size; trade off for optimal performance
+            return len  < size * 3; //length is capacity, so .66 fill factor mid size; trade off for optimal performance
         
         return len  < size + size + (size >> 1); //length is capacity, so .75 fill factor for larger ones; large sizes, compact it; save memory
     }
@@ -54,7 +54,7 @@ public class CompactHashMap<K, V> implements Map<K, V>, Cloneable, java.io.Seria
         final Object k = Objects.requireNonNull(key);//null checks, we do not support null
         Objects.requireNonNull(value);
         
-        retryAfterResize: for (;;) {
+        for (;;) {
             final Object[] tab = table;
             final int len = tab.length;
             if (len == 0){//special case for the 1st put -- the zero length is effectively a lattice and --5nanos(!!!) shave off due to lattice constraints!
@@ -69,7 +69,8 @@ public class CompactHashMap<K, V> implements Map<K, V>, Cloneable, java.io.Seria
                 if (k==item || k.equals(item)) {
                     @SuppressWarnings("unchecked")
                     V result = (V) tab[i + 1];
-                    tab[i + 1] = value;
+                    if (result != value)
+                      tab[i + 1] = value;
                     return result;
                 }
                 if ((i = nextKeyIndex(i, len)) == start){//loop the loop
@@ -79,7 +80,7 @@ public class CompactHashMap<K, V> implements Map<K, V>, Cloneable, java.io.Seria
 
             final int s = size + 1;
             if (needGrow(len, s) && resize(len))
-                continue retryAfterResize;
+                continue;//resized, try again
 
             tab[i] = k;
             tab[i + 1] = value;
